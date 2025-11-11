@@ -15,7 +15,7 @@ p.lead{margin:4px 0 0;color:var(--muted);font-size:14px;}
 .game{display:grid;grid-template-columns:1fr 320px;gap:16px;margin-top:16px;}
 .board{background:linear-gradient(180deg,#ffffff,#fbfdff);padding:16px;border-radius:10px;box-shadow:0 4px 12px rgba(8,15,25,0.06);}
 .palette{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
-.block{padding:8px;border-radius:8px;border:1px solid #eef2f7;cursor:grab;user-select:none;color:#fff;font-weight:600;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50px;font-size:1rem;transition:transform 0.2s;word-break:break-word;}
+.block{padding:8px;border-radius:8px;border:1px solid #eef2f7;cursor:grab;user-select:none;color:#fff;font-weight:600;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50px;font-size:1rem;transition:transform .2s;word-break:break-word;}
 .block[data-cat="Movimiento"]{background:#4C97FF;}
 .block[data-cat="Control"]{background:#FFAB19;}
 .block[data-cat="Sensores"]{background:#5CB1D6;}
@@ -42,57 +42,50 @@ button.ghost{background:white;color:var(--accent);border:1px solid #dbeafe;}
 </head>
 <body>
 <div class="wrap">
-<header>
-  <div>
-    <h1>Juego de Scratch: Clasifica los bloques</h1>
+  <header>
+    <div><h1>Juego de Scratch: Clasifica los bloques</h1></div>
+    <div class="stats">
+      <div class="chip" id="score">Puntos: 0</div>
+      <div class="chip small" id="timer">Tiempo: 02:00</div>
     </div>
-  <div class="stats">
-    <div class="chip" id="score">Puntos: 0</div>
-    <div class="chip small" id="timer">Tiempo: 02:00</div>
-  </div>
-</header>
+  </header>
 
-<div class="game">
-<section class="board">
-  <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
-    <div style="flex:1">
-      <h3 style="margin:0 0 10px 0">Paleta de bloques</h3>
-      <div class="palette" id="palette"></div>
-    </div>
-    <div style="width:200px">
-      <div class="panel controls">
-        <strong>Controles</strong>
-        <div class="buttons">
-          <button class="ghost" id="hint">Pista</button>
-          <button class="ghost" id="reset" style="display:none">Reiniciar</button>
+  <div class="game">
+    <section class="board">
+      <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+        <div style="flex:1">
+          <h3 style="margin:0 0 10px 0">Paleta de bloques</h3>
+          <div class="palette" id="palette"></div>
+        </div>
+        <div style="width:200px">
+          <div class="panel controls">
+            <strong>Controles</strong>
+            <div class="buttons">
+              <button class="ghost" id="hint">Pista</button>
+              <button class="ghost" id="reset" style="display:none">Reiniciar</button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+      <hr style="margin:10px 0;border:none;border-top:1px solid #eef2f6" />
+      <div class="bins-container" id="binsContainer"></div>
+      <div id="resultPanel"></div>
+    </section>
+
+    <aside>
+      <div class="panel">
+        <strong>Instrucciones</strong>
+        <ol style="margin-top:6px;padding-left:16px;color:var(--muted)">
+          <li>Arrastra cada bloque a la categoría correcta.</li>
+          <li>Pulsa "Pista" para ver un bloque con su categoría.</li>
+          <li>Pulsa "Comprobar" para ver cuántos aciertos y errores tuviste.</li>
+        </ol>
+      </div>
+      <div class="panel" style="margin-top:8px">
+        <div class="buttons"><button id="check">Comprobar</button></div>
+      </div>
+    </aside>
   </div>
-
-  <hr style="margin:10px 0;border:none;border-top:1px solid #eef2f6" />
-
-  <div class="bins-container" id="binsContainer"></div>
-
-  <div id="resultPanel"></div>
-</section>
-
-<aside>
-  <div class="panel">
-    <strong>Instrucciones</strong>
-    <ol style="margin-top:6px;padding-left:16px;color:var(--muted)">
-      <li>Arrastra cada bloque a la categoría correcta.</li>
-      <li>Pulsa "Pista" para ver un bloque con su categoría.</li>
-      <li>Pulsa "Comprobar" para ver cuántos aciertos y errores tuviste.</li>
-    </ol>
-  </div>
-  <div class="panel" style="margin-top:8px">
-    <div class="buttons">
-      <button id="check">Comprobar</button>
-    </div>
-  </div>
-</aside>
-</div>
 </div>
 
 <audio id="dragSound" src="https://actions.google.com/sounds/v1/cartoon/slide_whistle.ogg" preload="auto"></audio>
@@ -118,6 +111,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
     {id:'b15',text:'mostrar',cat:'Apariencia'}
   ];
 
+  const BIN_CATEGORIES = ['Movimiento','Control','Sensores','Apariencia','Sonido','Operadores'];
+
   const palette = document.getElementById('palette');
   const binsContainer = document.getElementById('binsContainer');
   const scoreEl = document.getElementById('score');
@@ -129,7 +124,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const dragSound = document.getElementById('dragSound');
   const dropSound = document.getElementById('dropSound');
 
-  const BIN_CATEGORIES = ['Movimiento','Control','Sensores','Apariencia','Sonido','Operadores'];
   let timerInterval=null;
   let totalTime=120;
   let startTime=null;
@@ -148,7 +142,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
       div.dataset.category=cat;
       div.innerHTML=`<h3>${cat}</h3>`;
       binsContainer.appendChild(div);
-
       div.addEventListener('dragover', e=>e.preventDefault());
       div.addEventListener('drop', e=>{
         e.preventDefault();
@@ -163,8 +156,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   function renderPalette(){
     palette.innerHTML='';
-    shuffleArray(BLOCKS);
-    BLOCKS.forEach(b=>{
+    const arr = [...BLOCKS];
+    shuffleArray(arr);
+    arr.forEach(b=>{
       const div = document.createElement('div');
       div.className='block';
       div.draggable=true;
@@ -181,8 +175,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   }
 
   function resetBins(){
-    const bins = document.querySelectorAll('.bin');
-    bins.forEach(bin=>{
+    document.querySelectorAll('.bin').forEach(bin=>{
       Array.from(bin.querySelectorAll('.block')).forEach(b=>{
         palette.appendChild(b);
         b.classList.remove('correct','wrong');
@@ -203,8 +196,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(!timerRunning) return;
     const elapsed = Math.floor((Date.now()-startTime)/1000);
     const remaining = totalTime - elapsed;
-    const mm = String(Math.floor(remaining/60)).padStart(2,'0');
-    const ss = String(remaining%60).padStart(2,'0');
+    const mm = String(Math.floor(Math.max(0,remaining)/60)).padStart(2,'0');
+    const ss = String(Math.max(0,remaining)%60).padStart(2,'0');
     timerEl.textContent='Tiempo: '+mm+':'+ss;
     if(remaining<=30) timerEl.style.color='red';
     else if(remaining<=60) timerEl.style.color='orange';
@@ -219,7 +212,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   function checkAnswers(fromTimer=false){
     const bins = document.querySelectorAll('.bin');
-    let totalBlocks = BLOCKS.length;
+    const totalBlocks = BLOCKS.length;
     let correct=0, wrong=0, placed=0;
 
     bins.forEach(bin=>{
@@ -232,7 +225,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
       });
     });
 
-    wrong += totalBlocks - placed; // bloques no colocados cuentan como errores
+    wrong += totalBlocks - placed;
 
     if(placed===0 && !fromTimer){
       alert("No has agregado bloques a las cajas!");
@@ -240,7 +233,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }
 
     timerRunning=false;
-    
     let score = (correct / totalBlocks) * 100;
     if(score>100) score=100;
     scoreEl.textContent='Puntos: '+Math.round(score);
@@ -257,7 +249,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     const tag = candidate.querySelector('.tag');
     tag.style.visibility='visible';
     candidate.animate([{transform:'scale(1)'},{transform:'scale(1.1)'},{transform:'scale(1)'}],{duration:700});
-    setTimeout(()=>{if(candidate.parentElement.id==='palette') tag.style.visibility='hidden';},3000);
+    setTimeout(()=>{if(candidate.parentElement.id==='palette') tag.style.visibility='hidden';},1200);
   }
 
   palette.addEventListener('dragover', e=>e.preventDefault());
